@@ -4,6 +4,7 @@ import GlobalConfig from '../Config/GlobalConfig';
 interface IDeployResult {
     project: string;
     stage: string;
+    branch: string;
     projectConfig: ProjectConfig;
     globalConfig: GlobalConfig;
     start: any;

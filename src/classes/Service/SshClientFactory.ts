@@ -1,5 +1,3 @@
-/// <reference path="../../../typings/index.d.ts" />
-
 import AbstractService from './AbstractService';
 import SshClient from "./SshClient";
 

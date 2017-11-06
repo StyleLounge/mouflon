@@ -1,12 +1,6 @@
-/// <reference path="../../typings/index.d.ts" />
-
 import fs = require('fs');
 import Q = require('q');
-
-import GlobalConfig from './Config/GlobalConfig';
-import PathConfig from './Config/PathConfig';
 import ServiceContainer from './Service/ServiceContainer';
-import Utils from './Utils';
 import DeployManager from './DeployManager';
 import LogService from './Service/LogService';
 import IDeployResult from './Model/IDeployResult' ;
@@ -52,6 +46,7 @@ export default class Mouflon {
             let result: IDeployResult = {
                 project: config.projectName,
                 stage: config.stageName,
+                branch: config.getStageConfig().branch,
                 projectConfig: config.projectConfig,
                 globalConfig: config.globalConfig,
                 start: start,

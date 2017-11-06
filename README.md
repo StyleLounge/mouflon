@@ -79,7 +79,8 @@ factory.setPaths({
  * 2015-11-18   v0.4.1       Now creates parent directories automatically when creating directories
  * 2016-06-06   v1.0.0  [DEPRECATD]deploy() Now resolves with a promise. Added custom data to config
  * 2016-06-07   V1.0.1
----
+ * 2016-06-15   V1.1.0       Added branch name to deployment result, removed triple-slach references for typings
+----------------------------------------------------------------------------------------------------------------
 
 Maintained by [Alexander Thiel](http://www.alexthiel.de)
 
