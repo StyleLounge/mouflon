@@ -8,24 +8,24 @@ import Q = require('q');
 import jsyaml = require('js-yaml');
 var merge:any = require('merge-recursive');
 
-import GlobalConfig from './Config/GlobalConfig';
-import PathConfig from './Config/PathConfig';
+import GlobalConfig from "./Config/GlobalConfig";
 
-import ServiceContainer from './Service/ServiceContainer';
+import ServiceContainer from "./Service/ServiceContainer";
 
-import LocalBashTask from './Task/Local/LocalBashTask';
-import BowerTask from './Task/Local/BowerTask';
-import ComposerTask from './Task/Local/ComposerTask';
-import GruntTask from './Task/Local/GruntTask';
-import GulpTask from './Task/Local/GulpTask';
-import TsdTask from './Task/Local/TsdTask';
-import NodeTask from './Task/Local/NodeTask';
-import MavenTask from './Task/Local/MavenTask';
-import TaskDefinition from './Task/TaskDefinition';
+import LocalBashTask from "./Task/Local/LocalBashTask";
+import BowerTask from "./Task/Local/BowerTask";
+import ComposerTask from "./Task/Local/ComposerTask";
+import GruntTask from "./Task/Local/GruntTask";
+import GulpTask from "./Task/Local/GulpTask";
+import TsdTask from "./Task/Local/TsdTask";
+import NodeTask from "./Task/Local/NodeTask";
+import MavenTask from "./Task/Local/MavenTask";
+import TaskDefinition from "./Task/TaskDefinition";
+import UploadTask from "./Task/UploadTask";
 
-import RemoteBashTask from './Task/Remote/RemoteBashTask';
-import LinkedDirTask from './Task/Remote/LinkedDirTask';
-import LinkedFileTask from './Task/Remote/LinkedFileTask';
+import RemoteBashTask from "./Task/Remote/RemoteBashTask";
+import LinkedDirTask from "./Task/Remote/LinkedDirTask";
+import LinkedFileTask from "./Task/Remote/LinkedFileTask";
 import SshClient from "./Service/SshClient";
 
 export default class DeployManager {
@@ -72,46 +72,8 @@ export default class DeployManager {
         this.services.log.startSection('Executing local build tasks');
         if (!this.services.config.projectConfig.localTasks) {
             this.services.log.closeSection('No local tasks found ("localTasks")');
-
         } else {
-            this.services.config.projectConfig.localTasks.forEach((task:TaskDefinition) => {
-                let Class;
-                switch (task.task) {
-                    case 'composer':
-                        Class = ComposerTask;
-                        break;
-                    case 'node':
-                        Class = NodeTask;
-                        break;
-                    case 'bower':
-                        Class = BowerTask;
-                        break;
-                    case 'grunt':
-                        Class = GruntTask;
-                        break;
-                    case 'gulp':
-                        Class = GulpTask;
-                        break;
-                    case 'tsd':
-                        Class = TsdTask;
-                        break;
-                    case 'bash':
-                        Class = LocalBashTask;
-                        break;
-                    case 'maven':
-                        Class = MavenTask;
-                        break;
-                    default:
-                        this.services.log.warn(`Ignoring unknown task type "${task.task}".`);
-                        return;
-                }
-
-                let instance = new Class(this.services, task.prefs ? task.prefs : {});
-                if (task.mod) {
-                    instance.modify(task.mod);
-                }
-                tasks.push(instance.execute.bind(instance));
-            });
+            tasks = this.runLocalTasks(tasks);
         }
         taskPromise = tasks.reduce(Q.when, Q(null));
         taskPromise.then(() => this.services.log.closeSection('Local build tasks executed'));
@@ -119,36 +81,60 @@ export default class DeployManager {
 
     }
 
+    private runLocalTasks(tasks: Q.Promise<any>[]): Q.Promise<any>[] {
+        this.services.config.projectConfig.localTasks.forEach((task: TaskDefinition) => {
+            let Class;
+            switch (task.task) {
+                case 'composer':
+                    Class = ComposerTask;
+                    break;
+                case 'node':
+                    Class = NodeTask;
+                    break;
+                case 'bower':
+                    Class = BowerTask;
+                    break;
+                case 'grunt':
+                    Class = GruntTask;
+                    break;
+                case 'gulp':
+                    Class = GulpTask;
+                    break;
+                case 'tsd':
+                    Class = TsdTask;
+                    break;
+                case 'bash':
+                    Class = LocalBashTask;
+                    break;
+                case 'maven':
+                    Class = MavenTask;
+                    break;
+                case 'upload':
+                    Class = UploadTask;
+                    break;
+                default:
+                    this.services.log.warn(`Ignoring unknown task type "${task.task}".`);
+                    return;
+            }
+
+            let instance = new Class(this.services, task.prefs ? task.prefs : {});
+            if (task.mod) {
+                instance.modify(task.mod);
+            }
+            tasks.push(instance.execute.bind(instance));
+        });
+
+        return tasks
+    }
+
     private finalize(sshClient:SshClient):Q.Promise<any> {
-        let tasks       = [],
+        let tasks:Q.Promise<any>[] = [],
             remoteTasks = this.services.config.projectConfig.remoteTasks;
 
         this.services.log.startSection('Executing remote tasks to finalize project');
 
         if (remoteTasks && remoteTasks.length > 0) {
-            remoteTasks.forEach((task:TaskDefinition) => {
-                let Class;
-                switch (task.task) {
-                    case 'bash':
-                        Class = RemoteBashTask;
-                        break;
-                    case 'linkedDirs':
-                        Class = LinkedDirTask;
-                        break;
-                    case 'linkedFiles':
-                        Class = LinkedFileTask;
-                        break;
-                    default:
-                        this.services.log.warn('Ignoring unknown task type "' + task.task + '".');
-                        return;
-                }
-
-                let instance = new Class(this.services, task.prefs ? task.prefs : {});
-
-                instance.setSshClient(sshClient);
-
-                tasks.push(instance.execute.bind(instance));
-            });
+            tasks = this.runRemoteTasks(tasks, sshClient);
         }
 
         let successPromise = tasks.reduce(Q.when, Q(null));
@@ -161,6 +147,34 @@ export default class DeployManager {
             }
         });
         return <Q.Promise<any>> successPromise;
+    }
+
+    private runRemoteTasks(tasks: Q.Promise<any>[], sshClient): Q.Promise<any>[] {
+        this.services.config.projectConfig.remoteTasks.forEach((task: TaskDefinition) => {
+            let Class;
+            switch (task.task) {
+                case 'bash':
+                    Class = RemoteBashTask;
+                    break;
+                case 'linkedDirs':
+                    Class = LinkedDirTask;
+                    break;
+                case 'linkedFiles':
+                    Class = LinkedFileTask;
+                    break;
+                default:
+                    this.services.log.warn('Ignoring unknown task type "' + task.task + '".');
+                    return;
+            }
+
+            let instance = new Class(this.services, task.prefs ? task.prefs : {});
+
+            instance.setSshClient(sshClient);
+
+            tasks.push(instance.execute.bind(instance));
+        });
+
+        return tasks;
     }
 
     private prepareTransfer(configPresent:boolean) {

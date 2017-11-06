@@ -51,7 +51,7 @@ export default class SshClient {
                 deferred.reject(procResult.stderr);
                 return;
             }
-            this.log.closeSection('Upload complete');
+            this.log.closeSection(`${filename} upload complete`);
             deferred.resolve(procResult);
         });
         return deferred.promise;
