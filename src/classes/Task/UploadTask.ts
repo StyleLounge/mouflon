@@ -37,6 +37,7 @@ export default class UploadTask extends AbstractTask implements Task {
     }
 
     private uploadFiles(source: string, sshClient: any, remotePath: string) {
+        source = this.trailingSlashIt(source);
         let files = this.getFilesInDir(source);
         return this.filterToType(files)
             .map(file => `${source}${file}`)
@@ -60,4 +61,8 @@ export default class UploadTask extends AbstractTask implements Task {
     private getFilesInDir = (dirName: string): string[] =>
         fs.readdirSync(dirName)
             .filter(f => f.indexOf(".") !== 0);
+
+    private trailingSlashIt(path: string): string {
+        return path.endsWith("/") ? path : `${path}/`;
+    }
 }
