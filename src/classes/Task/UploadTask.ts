@@ -45,7 +45,7 @@ export default class UploadTask extends AbstractTask implements Task {
             });
     }
 
-    filterToType(files) {
+    filterToType(files: string[]): string[] {
         const fileTypes = this.getPrefs()['fileTypes'];
         if (fileTypes && fileTypes.length > 0) {
             return files.filter(fileName =>
@@ -57,7 +57,7 @@ export default class UploadTask extends AbstractTask implements Task {
         return files;
     }
 
-    private getFilesInDir = (dirName: string): Array<string> =>
+    private getFilesInDir = (dirName: string): string[] =>
         fs.readdirSync(dirName)
             .filter(f => f.indexOf(".") !== 0);
 }
