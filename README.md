@@ -80,6 +80,8 @@ factory.setPaths({
  * 2016-06-06   v1.0.0  [DEPRECATD]deploy() Now resolves with a promise. Added custom data to config
  * 2016-06-07   V1.0.1
  * 2016-06-15   V1.1.0       Added branch name to deployment result, removed triple-slach references for typings
+ * 2017-11-07   V1.2.0       Added upload task (STYLE-8298 Deployments lead to webapp downtime)
+
 ----------------------------------------------------------------------------------------------------------------
 
 Maintained by [Alexander Thiel](http://www.alexthiel.de)
