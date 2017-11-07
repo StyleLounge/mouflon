@@ -45,7 +45,7 @@ export default class UploadTask extends AbstractTask implements Task {
             });
     }
 
-    filterToType(files: string[]): string[] {
+    private filterToType(files: string[]): string[] {
         const fileTypes = this.getPrefs()['fileTypes'];
         if (fileTypes && fileTypes.length > 0) {
             return files.filter(fileName =>
